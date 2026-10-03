@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Love Game</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#321331,#120912 65%);color:#fff;font-family:Georgia,serif;display:flex;align-items:center;justify-content:center;padding:20px}
+#app{width:min(760px,100%);min-height:560px;background:rgba(20,10,25,.94);border:1px solid #8e477f;border-radius:24px;padding:32px 24px;box-shadow:0 20px 70px rgba(0,0,0,.5);text-align:center}
+h1,h2{margin:10px 0 18px;color:#ffd8ee}
+h1{font-size:clamp(32px,7vw,58px)}
+h2{font-size:clamp(25px,5vw,38px)}
+p{font-size:18px;line-height:1.6;color:#eadbe7}
+.small{font-size:15px;color:#bda8b9}
+button{display:block;width:min(560px,100%);margin:12px auto;padding:15px 18px;border:1px solid #b65a9d;border-radius:14px;background:#241323;color:#fff;font-size:17px;cursor:pointer;transition:.2s}
+button:hover{background:#542345;transform:translateY(-1px)}
+.primary{background:linear-gradient(135deg,#8d3d76,#c05c9f);border:0;font-weight:bold}
+.correct{border-color:#65d59b;background:#173d2d}
+.wrong{border-color:#d66d79;background:#431d28}
+.feedback{margin:18px auto;padding:15px;border-radius:14px;background:#211522;color:#f7dce9;max-width:600px}
+.heart{font-size:60px;margin:10px}
+.big{font-size:clamp(30px,7vw,58px);font-weight:bold;color:#ffb9dc;line-height:1.2}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const app=document.getElementById("app");
+
+const level1=[
+["On which platform did we first message each other?",["Instagram","WhatsApp","Facebook","Telegram"],0],
+["When did we last meet?",["21 August 2021","21 September 2021","21 October 2021","21 September 2020"],1],
+["What were we planning to do on the second night?",["Play chess","Drape a saree","Watch a movie","Go for a walk"],1],
+["When did I start loving you?",["8 years old","12 years old","16 years old","After we met"],0],
+["What have I saved your name as in my phone?",["Maaaamaaaa🔮♥️","Hubby✨🔮","Me Tesoro🔮✨","My Detective 🕵️"],2]
+];
+
+const level3=[
+["When was our first video call?",["June 28, 2022","June 30, 2022","July 2, 2022","July 5, 2022"],1],
+["Which saree did you ask me to wear in my B.Ed function?",["Red saree","Kerala saree","Green saree","Blue saree"],0],
+["Which song did we both share at the same time?",["Perfect","Closer","You Belong to Me","Until I Found You"],0],
+["What did I do for your first birthday since our relationship?",["We talked at 12 AM","I showed gifts at 12 AM","We were on a video call at 12 AM","All of the above"],-1]
+];
+
+const boss=[
+["What instantly makes me happy?",["Eating cake","Marriage","Thinking about you","All of the above"],3],
+["What do I overthink?",["Marriage","Everything","The past","My cat","All of the above"],4],
+["What nickname do I secretly love?",["Kunji","Maaaamaaaa","Kutty","Chellam"],0],
+["What food always fixes my mood?",["Gulab jamun","Watermelon","Ice cream","Ice cake"],3],
+["If I say “I’m fine”, what does it mean?",["I’m fine","I’m hungry","Something is definitely wrong","RUN"],2]
+];
+
+let screen="start", qIndex=0, answered=false;
+
+function render(){
+  if(screen==="start") return app.innerHTML=`
+    <div class="heart">♥</div><h1>WELCOME, DETECTIVE.</h1>
+    <p>Your mission is simple.</p><p><b>Find the person who stole your heart.</b></p>
+    <button class="primary" data-a="start">START GAME</button>`;
+
+  if(screen==="l1") return renderQuestion("LEVEL 1 — DO YOU REMEMBER?",level1,"l1");
+  if(screen==="vibe") return app.innerHTML=`
+    <h2>LEVEL 2</h2><h1>What vibe does your girl have?</h1>
+    ${["Soft Romantic","Dark Mystery","Cute & Playful"].map((x,i)=>`<button data-a="vibe" data-i="${i}">${x}</button>`).join("")}`;
+
+  if(screen==="vibeResult") return app.innerHTML=`
+    <h2>LEVEL 2</h2><div class="feedback">Correct. You know your girl has a little mystery in her. 🖤</div>
+    <button class="primary" data-a="next3">CONTINUE</button>`;
+
+  if(screen==="l3") return renderQuestion("LEVEL 3 — MEMORY QUESTIONS",level3,"l3");
+  if(screen==="birthdayWrong") return app.innerHTML=`
+    <h2>OHHH... WRONG. 😭😂</h2>
+    <div class="feedback">Poyaaa😭.. Aniki ivan enta 12 am ku pesave illa.. Anthai kali ta tha pesitu irunthan.. Nan evlo kashta pata theriyumaa?? 😭.. Aprama 1:30 am ku mela vanthan ivan.. Bad ivan 🥺😭</div>
+    <button class="primary" data-a="nextboss">CONTINUE</button>`;
+
+  if(screen==="boss") return renderQuestion("LEVEL 4 — FINAL BOSS: HOW WELL DO YOU KNOW HER?",boss,"boss");
+  if(screen==="complete") return app.innerHTML=`
+    <div class="heart">♥</div><h1>MISSION COMPLETE</h1>
+    <p>You found the answer.</p>
+    <button class="primary" data-a="reward">OPEN YOUR REWARD 💌</button>`;
+
+  if(screen==="final") return app.innerHTML=`
+    <h2 id="typed"></h2><div id="message" style="display:none">
+    <p>These four years.🥺</p>
+    <p>You have given me many beautiful memories and made me laugh a million times even though you are not present. I will always love you and cherish you forever.🥺❤️</p>
+    <p>Please marry me soon🥺</p>
+    <div class="big">Happy Birthday Maaaamaaaa 🥺♥️</div>
+    <p class="big">I love you lotssssssssss 🥺❤️❤️❤️</p>
+    <p>GAME OVER</p><button class="primary" data-a="again">PLAY AGAIN</button></div>`;
+
+  if(screen==="again") return app.innerHTML=`
+    <h2>No matter how many times you play..</h2><div class="big">You are stuck with me 😏</div>
+    <button class="primary" data-a="restart">PLAY AGAIN</button>`;
+}
+
+function renderQuestion(title,list,key){
+  const q=list[qIndex];
+  app.innerHTML=`<p class="small">${qIndex+1} / ${list.length}</p><h2>${title}</h2><h2>${q[0]}</h2>
+  ${q[1].map((x,i)=>`<button data-a="answer" data-i="${i}">${x}</button>`).join("")}`;
+}
+
+function answer(i){
+  const list=screen==="l1"?level1:screen==="l3"?level3:boss;
+  const q=list[qIndex];
+  if(answered)return;
+  answered=true;
+  document.querySelectorAll("button[data-a=answer]").forEach(b=>b.disabled=true);
+
+  if(q[2]===-1){
+    screen="birthdayWrong"; answered=false; render(); return;
+  }
+
+  const buttons=[...document.querySelectorAll("button[data-a=answer]")];
+  buttons[i].classList.add(i===q[2]?"correct":"wrong");
+  buttons[q[2]].classList.add("correct");
+
+  const good=i===q[2];
+  const msg=good?"Super ivan uh🥺":"Naalu varushama onna irukom.. Ithukuda ivanuku theriyala... 😭";
+  const div=document.createElement("div");div.className="feedback";div.textContent=msg;
+  app.appendChild(div);
+
+  const next=document.createElement("button");next.className="primary";next.textContent=qIndex===list.length-1?"CONTINUE":"NEXT QUESTION";next.dataset.a="next";app.appendChild(next);
+}
+
+app.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-a]"); if(!b)return;
+  const a=b.dataset.a, i=Number(b.dataset.i);
+
+  if(a==="start"){screen="l1";qIndex=0;answered=false;render()}
+  else if(a==="answer")answer(i)
+  else if(a==="next"){
+    const list=screen==="l1"?level1:boss;
+    qIndex++;
+    if(qIndex>=list.length){screen=screen==="l1"?"vibe":"complete";qIndex=0}
+    answered=false;render();
+    if(screen==="l1"||screen==="boss"){}
+  }
+  else if(a==="vibe"){screen="vibeResult";render()}
+  else if(a==="next3"){screen="l3";qIndex=0;answered=false;render()}
+  else if(a==="nextboss"){screen="boss";qIndex=0;answered=false;render()}
+  else if(a==="reward"){screen="final";render();typeMessage()}
+  else if(a==="again"){screen="again";render()}
+  else if(a==="restart"){screen="start";qIndex=0;answered=false;render()}
+});
+
+function typeMessage(){
+  const lines=["You thought this was a game...","But every question had the same answer.","You."];
+  const el=document.getElementById("typed");let n=0;
+  function line(){
+    if(n>=lines.length){document.getElementById("message").style.display="block";return}
+    el.textContent=lines[n++];setTimeout(line,1000);
+  }
+  line();
+}
+render();
+</script>
+</body>
+</html>
